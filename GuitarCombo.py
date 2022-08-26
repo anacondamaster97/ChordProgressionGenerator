@@ -1,24 +1,36 @@
 
 import random
+import math
+
 
 def board():
-	r1=['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']
-	r2=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-	r3=['G#','A','A#','B','C','C#','D','D#','E','F','F#','G']
-	r4=['D#','E','F','F#','G','G#','A','A#','B','C','C#','D']
-	r5=['A#','B','C','C#','D','D#','E','F','F#','G','G#','A']
-	r6=['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']
+	"""
+	Creates fret board for guitar
 
-	full=[]
-	full.append(r1)
-	full.append(r2)
-	full.append(r3)
-	full.append(r4)
-	full.append(r5)
-	full.append(r6)
+	Returns:
+		List[List[String]]: 2d array with guitar fretboard
+	"""
+	full = [['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']
+		['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+		['G#','A','A#','B','C','C#','D','D#','E','F','F#','G']
+		['D#','E','F','F#','G','G#','A','A#','B','C','C#','D']
+		['A#','B','C','C#','D','D#','E','F','F#','G','G#','A']
+		['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']]
+
+	
 	return full
+
 def scales(note):
 	#  W W H W W W H
+	"""
+	Generates scales with a base note
+
+	Args:
+		note (String): Note Ex: B or F#
+
+	Returns:
+		List[String]: returns a scale based on base note
+	"""
 	
 	notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 	starting_pos=notes.index(note)
@@ -43,23 +55,33 @@ def scales(note):
 
 		
 		notes_count+=1
-	"""if count==5 or count==4 or count==1:
-						#minor
-						scale.append(notes[starting_pos]+'m')
-					else:
-						#major
-						scale"""
+	
 	scale=scale[:len(scale)-1]
 	return scale
 
 def key_Chord(scale):
 	#  M m m M M m Dim
+	"""
+	Attatches progression values to scale. Ex: Major and Minor patterns above
+
+	Args:
+		scale (List[String]): Musical scale from previous function
+
+	Returns:
+		List[String]: Scale with added progression values Ex: Major and Minor patterns
+	"""
 	for index in range(len(scale)):
 		if index==1 or index ==2 or index==5:
 			scale[index]+='m'
 	return scale
 
 def allScales():
+	"""
+	Generates every scale permutation with previous functions
+
+	Returns:
+		List[List[String]]: Every permutation of scales
+	"""
 	sc="CDEFGAB"
 	allScales=[]
 	for elems in sc:
@@ -69,6 +91,15 @@ def allScales():
 
 
 def whichKey(chordProg):
+	"""
+	Tells user the key based on chord progression
+
+	Args:
+		chordProg (List[String]): Any Chord Progression
+
+	Returns:
+		String: Scale of the chord progression given
+	"""
 	scales='CDEFGAB'
 	scale=0
 	count=0
@@ -85,6 +116,15 @@ def whichKey(chordProg):
 	return None
 
 def setUp():
+	"""
+	Sets up the permutations of chord progressions, minor/major scale patters, and
+	permutations of chord patterns for major and minor chord progressions
+
+	Returns:
+		Tuple(Dict(String:List[String]), Tuple(String, String),
+		List[List[Int]], List[List[Int]]): Returns a tuple with progressions, scale_patterns
+		(with major and minor scales inside), chord_patterns_major, and chord_patterns_minor
+	"""
 	progressions = {
 		"A" : ["B","C","D","E","F","G"],
 		"B" : ["C#","D","E","F","#G","A"],
@@ -125,6 +165,11 @@ def setUp():
 
 
 def optimize():
+	"""
+	Uses a Feedback loop to select random chord progressions based on mood and optimizes 
+	to produce moods that are favorable to the user
+	"""
+	#l oading data from setUp()
 	data = setUp() #tuple
 	progressions = data[0]
 	major_scale_patterns = data[1][0]
@@ -132,6 +177,7 @@ def optimize():
 	chord_patterns_major = data[2]
 	chord_patterns_minor = data[3]
 
+	# creating optimizer metrics
 	chord_pattern_major_optimizer = [1000/len(chord_patterns_major) for index in range(len(chord_patterns_major))]
 	chord_pattern_minor_optimizer = [1000/len(chord_patterns_minor) for index in range(len(chord_patterns_minor))]
 
@@ -140,6 +186,8 @@ def optimize():
 	progression_base = [note for note in progressions]
 
 	running = True
+
+	# adjustment values
 	decrement_value = 0.9
 	increment_value = 1.1
 
@@ -203,9 +251,21 @@ def optimize():
 			
 		elif prompt == 'D':
 			factor = decrement_value
+		else:
+			running = False
 			
-		if key == "Major": chord_pattern_major_optimizer[choice_value]*=factor
-		if key == "Minor" : chord_pattern_minor_optimizer[choice_value]*=factor
+		if key == "Major":
+			if factor == decrement_value:
+				major_length -= math.floor(chord_pattern_major_optimizer[choice_value]*(1-factor))
+			else:
+				major_length += math.floor(chord_pattern_major_optimizer[choice_value]*(factor-1))
+			chord_pattern_major_optimizer[choice_value]*=factor
+		if key == "Minor" :
+			if factor == decrement_value:
+				minor_length -= math.floor(chord_pattern_minor_optimizer[choice_value]*(1-factor))
+			else:
+				minor_length += math.floor(chord_pattern_minor_optimizer[choice_value]*(factor-1))
+			chord_pattern_minor_optimizer[choice_value]*=factor
 
 		
 		
