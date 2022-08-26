@@ -1,2 +1,2 @@
 # ChordProgressionGenerator
-Uses machine learning and music theory to generate chord progressions that the user presents to like based on chord optimal paterns
+Uses machine learning and music theory to generate chord progressions that the user presents to like based chords with different moods: "The Vibe-anator"
