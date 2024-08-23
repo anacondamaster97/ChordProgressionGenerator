@@ -1,6 +1,9 @@
-
+from art import *
 import random
 import math
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 
 def board():
@@ -10,11 +13,11 @@ def board():
 	Returns:
 		List[List[String]]: 2d array with guitar fretboard
 	"""
-	full = [['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']
-		['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-		['G#','A','A#','B','C','C#','D','D#','E','F','F#','G']
-		['D#','E','F','F#','G','G#','A','A#','B','C','C#','D']
-		['A#','B','C','C#','D','D#','E','F','F#','G','G#','A']
+	full = [['F','F#','G','G#','A','A#','B','C','C#','D','D#','E'],
+		['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
+		['G#','A','A#','B','C','C#','D','D#','E','F','F#','G'],
+		['D#','E','F','F#','G','G#','A','A#','B','C','C#','D'],
+		['A#','B','C','C#','D','D#','E','F','F#','G','G#','A'],
 		['F','F#','G','G#','A','A#','B','C','C#','D','D#','E']]
 
 	
@@ -115,7 +118,7 @@ def whichKey(chordProg):
 
 	return None
 
-def setUp():
+class setUp:
 	"""
 	Sets up the permutations of chord progressions, minor/major scale patters, and
 	permutations of chord patterns for major and minor chord progressions
@@ -125,154 +128,116 @@ def setUp():
 		List[List[Int]], List[List[Int]]): Returns a tuple with progressions, scale_patterns
 		(with major and minor scales inside), chord_patterns_major, and chord_patterns_minor
 	"""
-	progressions = {
-		"A" : ["B","C","D","E","F","G"],
-		"B" : ["C#","D","E","F","#G","A"],
-		"C" : ["D","D#","F","G","G#","A#"],
-		"D" : ["E","F","G","A","A#","C"],
-		"E" : ["F#","G","A","B","C","D"],
-		"F" : ["G", "G#", "A#","C","C#","D#"],
-		"G" : ["A","A#","C","D","D#","F"]
-	}
-	minor_scale_patterns = "mdMmmMM" # major = M minor = m diminished = d
-	major_scale_patterns = "MmmMMmd"
-	scale_patterns = (major_scale_patterns, minor_scale_patterns)
-
-	chord_patterns_major = [
-		[1,4,5],
-		[1,6,2,5],
-		[1,3,4,5],
-		[1,6,4,5],
-		[1,5,6,4],
-		[1,4,1,5],
-		[1,4,2,5],
-		[1,4,6,5],
-		[2,5,1]
-	]
-
-	chord_patterns_minor = [
-		[1,6,7],
-		[1,6,3,7],
-		[1,7,6,7],
-		[1,4,7],
-		[1,4,5,1],
-		[1,4,1],
-		[1,4,5],
-		[6,7,1,1],
-		[2,5,1]
-	]
-	return (progressions, scale_patterns, chord_patterns_major, chord_patterns_minor)
-
-
-def optimize():
-	"""
-	Uses a Feedback loop to select random chord progressions based on mood and optimizes 
-	to produce moods that are favorable to the user
-	"""
-	#l oading data from setUp()
-	data = setUp() #tuple
-	progressions = data[0]
-	major_scale_patterns = data[1][0]
-	minor_scale_patterns = data[1][1]
-	chord_patterns_major = data[2]
-	chord_patterns_minor = data[3]
-
-	# creating optimizer metrics
-	chord_pattern_major_optimizer = [1000/len(chord_patterns_major) for index in range(len(chord_patterns_major))]
-	chord_pattern_minor_optimizer = [1000/len(chord_patterns_minor) for index in range(len(chord_patterns_minor))]
-
-
-
-	progression_base = [note for note in progressions]
-
-	running = True
-
-	# adjustment values
-	decrement_value = 0.9
-	increment_value = 1.1
-
-	major_length = 1000
-	minor_length = 1000
-
-	while(running):
-
-		scale = random.choice(progression_base)
-		print(scale)
-		key = random.choice(["Minor", "Major"])
-		print(key)
-		print(chord_pattern_major_optimizer, chord_pattern_minor_optimizer)
-		choice_value = 0
-		choice = []
-		if key == "Major":
-			randomized = random.randrange(0, major_length)
-			count = 0
-			counter = 0
-			while count < randomized:
-				count+=chord_pattern_major_optimizer[counter]
-				if counter == 8: break
-				counter+=1
-			
-			choice = chord_patterns_major[counter]
-			choice_value = counter
-		else:
-			
-			randomized = random.randrange(0, minor_length)
-			count = 0
-			counter = 0
-			while count < randomized:
-				count+=chord_pattern_minor_optimizer[counter]
-				if counter == 8: break
-				counter+=1
-
-			
-			choice = chord_patterns_minor[counter]
-			choice_value = counter
-		print(choice)
-		progression = []
-		for counter, elems in enumerate(choice):
-			if key == "Minor":
-				if elems == 1:
-					progression.append(scale+minor_scale_patterns[0])
-				else:
-					progression.append(progressions[scale][elems - 2]+minor_scale_patterns[elems - 1])
-			if key == "Major":
-				if elems == 1:
-					progression.append(scale+major_scale_patterns[0])
-				else:
-					progression.append(progressions[scale][elems - 2]+major_scale_patterns[elems - 1])
-		counter = 0
-		print(progression)
-		prompt = input("L for Like. D for Dislike. E for Exit:\n")
-		factor = 0
-		if prompt == 'E':
-			running = False
-		elif prompt == 'L':
-			factor = increment_value
-			
-		elif prompt == 'D':
-			factor = decrement_value
-		else:
-			running = False
-			
-		if key == "Major":
-			if factor == decrement_value:
-				major_length -= math.floor(chord_pattern_major_optimizer[choice_value]*(1-factor))
-			else:
-				major_length += math.floor(chord_pattern_major_optimizer[choice_value]*(factor-1))
-			chord_pattern_major_optimizer[choice_value]*=factor
-		if key == "Minor" :
-			if factor == decrement_value:
-				minor_length -= math.floor(chord_pattern_minor_optimizer[choice_value]*(1-factor))
-			else:
-				minor_length += math.floor(chord_pattern_minor_optimizer[choice_value]*(factor-1))
-			chord_pattern_minor_optimizer[choice_value]*=factor
-
+	def __init__(self):
 		
+		self.progressions_major = {'A': ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#d'], 'B': ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#d'], 'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bd'], 'D': ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#d'], 'E': ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#d'], 'F': ['F', 'Gm', 'Am', 'A#', 'C', 'Dm', 'Ed'], 'G': ['G', 'Am', 'Dm', 'C', 'D', 'Em', 'F#dim']}
+		self.progressions_minor = {'Am': ['Am', 'Bd', 'C', 'Dm', 'Em', 'F', 'G'], 'Bm': ['Bm', 'C#d', 'D', 'Em', 'F#m', 'G', 'A'], 'Cm': ['Cm', 'Dd', 'D#', 'Fm', 'Gm', 'G#', 'A#'], 'Dm': ['Dm', 'Ed', 'F', 'Gm', 'Am', 'A#', 'C'], 'Em': ['Em', 'F#d', 'G', 'Am', 'Bm', 'C', 'D'], 'Fm': ['Fm', 'Gd', 'G#', 'A#m', 'Cm', 'C#', 'D#'], 'Gm': ['Gm', 'Ad', 'A#', 'Cm', 'Dm', 'D#', 'F']}
+  
+		self.major_scale_patterns = "MmmMMmd"
+		self.minor_scale_patterns = "mdMmmMM" # major = M minor = m diminished = d
 		
 
+		self.chord_patterns_major = [
+			[1,4,5],
+			[1,6,2,5],
+			[1,3,4,5],
+			[1,6,4,5],
+			[1,5,6,4],
+			[1,4,1,5],
+			[1,4,2,5],
+			[1,4,6,5],
+			[2,5,1]
+		]
 
+		self.chord_patterns_minor = [
+			[1,6,7],
+			[1,6,3,7],
+			[1,7,6,7],
+			[1,4,7],
+			[1,4,5,1],
+			[1,4,1],
+			[1,4,5],
+			[6,7,1,1],
+			[2,5,1]
+		]
 
+variables = setUp()
 
+progressions_major = variables.progressions_major
+progressions_minor = variables.progressions_minor
 
+chord_patterns_major = variables.chord_patterns_major
+chord_patterns_minor = variables.chord_patterns_minor
 
+class ChordRecommender(nn.Module):
+    def __init__(self):
+        super(ChordRecommender, self).__init__()
+        self.fc = nn.Linear(6, 1)  # Expecting 6 input features, 1 output
 
+    def forward(self, x):
+        return self.fc(x)
+
+# Instantiate the model, loss function, and optimizer
+model = ChordRecommender()
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+# Function to map chord patterns to actual progressions
+def map_chord_pattern_to_progression(chord_pattern, progression):
+    return [progression[i-1] for i in chord_pattern]
+
+# Training loop with random pattern selection
+while True:
+    key_type = input("Do you want a Major or Minor progression? (Enter 'Major' or 'Minor'): ").lower()
+    
+    if key_type == 'major':
+        keys = list(progressions_major.keys())
+        progressions = progressions_major
+        patterns = chord_patterns_major
+    elif key_type == 'minor':
+        keys = list(progressions_minor.keys())
+        progressions = progressions_minor
+        patterns = chord_patterns_minor
+    else:
+        print("Invalid input. Please enter 'Major' or 'Minor'.")
+        continue
+    
+    print("Available keys:", keys)
+    key = input(f"Choose a key from the above options: ")
+    
+    if key not in progressions:
+        print("Invalid key. Please choose a valid key.")
+        continue
+    
+    # Randomly select a pattern
+    chosen_pattern = random.choice(patterns)
+
+    # Generate the chord progression
+    mapped_chords = map_chord_pattern_to_progression(chosen_pattern, progressions[key])
+    print(f"Generated Chord Progression: {mapped_chords}")
+
+    # Get user feedback (0 to 1)
+    user_feedback = float(input("Rate this progression (0.0 to 1.0): "))
+    
+    while len(chosen_pattern) < 6:
+        chosen_pattern.append(0)
+    # Prepare input for the model
+    chosen_pattern_tensor = torch.tensor(chosen_pattern, dtype=torch.float32).view(1, -1)  # Reshape to (1, 6)
+    
+    # Forward pass
+    output = model(chosen_pattern_tensor)  # Output is a 1x1 tensor
+    target = torch.tensor([[user_feedback]], dtype=torch.float32)  # Make sure the target is 2D (1x1 tensor)
+    
+    loss = criterion(output, target)
+    
+    # Backward pass and optimization
+    optimizer.zero_grad()  # Zero the gradients before backpropagation
+    loss.backward()
+    optimizer.step()
+
+    print(f"Training iteration completed with loss: {loss.item()}")
+    
+    # Continue or break
+    cont = input("Would you like to continue? (yes/no): ")
+    if cont.lower() != 'yes':
+        break
