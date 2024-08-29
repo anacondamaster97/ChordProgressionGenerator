@@ -172,21 +172,18 @@ chord_patterns_minor = variables.chord_patterns_minor
 class ChordRecommender(nn.Module):
     def __init__(self):
         super(ChordRecommender, self).__init__()
-        self.fc = nn.Linear(6, 1)  # Expecting 6 input features, 1 output
+        self.fc = nn.Linear(6, 1)  
 
     def forward(self, x):
         return self.fc(x)
 
-# Instantiate the model, loss function, and optimizer
 model = ChordRecommender()
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-# Function to map chord patterns to actual progressions
 def map_chord_pattern_to_progression(chord_pattern, progression):
     return [progression[i-1] for i in chord_pattern]
 
-# Training loop with random pattern selection
 while True:
     key_type = input("Do you want a Major or Minor progression? (Enter 'Major' or 'Minor'): ").lower()
     
@@ -209,35 +206,30 @@ while True:
         print("Invalid key. Please choose a valid key.")
         continue
     
-    # Randomly select a pattern
     chosen_pattern = random.choice(patterns)
 
-    # Generate the chord progression
     mapped_chords = map_chord_pattern_to_progression(chosen_pattern, progressions[key])
     print(f"Generated Chord Progression: {mapped_chords}")
 
-    # Get user feedback (0 to 1)
     user_feedback = float(input("Rate this progression (0.0 to 1.0): "))
     
     while len(chosen_pattern) < 6:
         chosen_pattern.append(0)
-    # Prepare input for the model
+
     chosen_pattern_tensor = torch.tensor(chosen_pattern, dtype=torch.float32).view(1, -1)  # Reshape to (1, 6)
     
-    # Forward pass
     output = model(chosen_pattern_tensor)  # Output is a 1x1 tensor
     target = torch.tensor([[user_feedback]], dtype=torch.float32)  # Make sure the target is 2D (1x1 tensor)
     
     loss = criterion(output, target)
     
-    # Backward pass and optimization
-    optimizer.zero_grad()  # Zero the gradients before backpropagation
+    optimizer.zero_grad()  
     loss.backward()
     optimizer.step()
 
     print(f"Training iteration completed with loss: {loss.item()}")
     
-    # Continue or break
+
     cont = input("Would you like to continue? (yes/no): ")
     if cont.lower() != 'yes':
         break
